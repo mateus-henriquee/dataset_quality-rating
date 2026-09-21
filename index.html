@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="PT-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Quality Monitor</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0d12;
+  --card:#111520;
+  --card2:#161b27;
+  --purple:#8d5ccc;
+  --purple-dim:#6b44a0;
+  --purple-glow:rgba(141,92,204,0.15);
+  --text:#e7e9ec;
+  --text-muted:#7a8199;
+  --border:rgba(141,92,204,0.2);
+  --border-strong:rgba(141,92,204,0.45);
+  --ok:#22c77a;
+  --warn:#f0b429;
+  --err:#e84b4b;
+  --radius:12px;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans,-apple-system,sans-serif)}
+.page{min-height:100vh;display:flex;flex-direction:column}
+.main{flex:1;padding:2rem 1.5rem 1rem}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem}
+.logo{display:flex;align-items:center;gap:.75rem}
+.logo-icon{width:36px;height:36px;border-radius:9px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-size:16px;font-weight:500;color:var(--text)}
+.logo-sub{font-size:12px;color:var(--text-muted)}
+.badge{font-size:11px;background:var(--purple-glow);color:var(--purple);border:0.5px solid var(--border-strong);border-radius:20px;padding:3px 10px}
+
+.upload-zone{border:1.5px dashed var(--border-strong);border-radius:var(--radius);padding:2.5rem;text-align:center;cursor:pointer;transition:background .15s, border-color .15s;background:var(--card);margin-bottom:1.25rem}
+.upload-zone:hover{background:var(--card2);border-color:var(--purple)}
+.upload-zone i{font-size:36px;color:var(--purple);display:block;margin-bottom:.75rem}
+.upload-zone p{font-size:14px;color:var(--text-muted)}
+.upload-zone small{font-size:12px;color:var(--text-muted);opacity:.6;margin-top:4px;display:block}
+#fileInput{display:none}
+.demo-btn{margin-top:1rem;font-size:13px;padding:7px 18px;cursor:pointer;background:var(--purple-glow);color:var(--purple);border:0.5px solid var(--border-strong);border-radius:8px}
+.demo-btn:hover{background:rgba(141,92,204,0.25)}
+
+.report{display:none}
+.section-label{font-size:11px;color:var(--text-muted);letter-spacing:.05em;margin-bottom:.75rem;margin-top:1.5rem}
+
+.score-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
+.score-card{background:var(--card);border-radius:var(--radius);padding:1.25rem;border:0.5px solid var(--border)}
+.score-label{font-size:11px;color:var(--text-muted);margin-bottom:.6rem}
+.score-ring-wrap{display:flex;align-items:center;gap:1rem}
+.ring-text{font-size:36px;font-weight:500;color:var(--text)}
+.ring-grade{font-size:12px;color:var(--text-muted);margin-top:2px}
+.sum-row{display:flex;align-items:center;gap:.5rem;font-size:13px;color:var(--text-muted);margin-bottom:5px}
+.sum-row i{font-size:14px;color:var(--purple);vertical-align:-2px}
+
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric-card{background:var(--card);border-radius:var(--radius);padding:.9rem 1.1rem;border:0.5px solid var(--border);display:flex;align-items:center;gap:.75rem}
+.metric-icon{font-size:22px;flex-shrink:0}
+.metric-label{font-size:12px;color:var(--text-muted)}
+.metric-val{font-size:17px;font-weight:500;margin-top:1px}
+.ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
+
+.bar-section{background:var(--card);border-radius:var(--radius);padding:1.25rem;border:0.5px solid var(--border)}
+.bar-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.7rem}
+.bar-row:last-child{margin-bottom:0}
+.bar-name{font-size:12px;color:var(--text-muted);width:120px;flex-shrink:0}
+.bar-track{flex:1;background:rgba(255,255,255,.06);border-radius:4px;height:7px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.bar-pct{font-size:12px;font-weight:500;width:38px;text-align:right;flex-shrink:0}
+
+.clean-section{background:var(--card);border-radius:var(--radius);padding:1.25rem;border:0.5px solid var(--border)}
+.clean-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.clean-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.clean-btn{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;background:var(--card2);border:0.5px solid var(--border);border-radius:9px;cursor:pointer;font-size:13px;color:var(--text-muted);transition:border-color .15s,color .15s,background .15s;text-align:left}
+.clean-btn:hover{border-color:var(--border-strong);color:var(--text);background:rgba(141,92,204,0.08)}
+.clean-btn.done{border-color:var(--ok);color:var(--ok);background:rgba(34,199,122,0.07)}
+.clean-btn.disabled{opacity:.4;cursor:not-allowed}
+.clean-btn i{font-size:16px;flex-shrink:0}
+.clean-count{font-size:11px;margin-left:auto;background:rgba(255,255,255,.06);padding:2px 7px;border-radius:10px;color:inherit}
+
+.actions-row{display:flex;gap:8px;flex-wrap:wrap}
+.action-btn{font-size:12px;padding:7px 14px;cursor:pointer;background:var(--purple-glow);color:var(--purple);border:0.5px solid var(--border-strong);border-radius:8px;display:flex;align-items:center;gap:5px}
+.action-btn:hover{background:rgba(141,92,204,0.25)}
+.action-btn.gray{background:rgba(255,255,255,.04);color:var(--text-muted);border-color:var(--border)}
+.action-btn.gray:hover{background:rgba(255,255,255,.08);color:var(--text)}
+
+.api-box{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem}
+.api-label{font-size:11px;color:var(--text-muted);margin-bottom:.5rem}
+.api-code{font-family:var(--font-mono,monospace);font-size:12px;color:var(--purple);background:rgba(141,92,204,0.12);border-radius:6px;padding:.4rem .75rem;display:inline-block;border:0.5px solid var(--border)}
+.api-desc{font-size:12px;color:var(--text-muted);margin-top:.4rem}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--ok);color:#0a0d12;font-size:13px;font-weight:500;padding:8px 20px;border-radius:20px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99}
+.toast.show{opacity:1}
+
+footer{background:var(--card);border-top:0.5px solid var(--border);padding:1.25rem 1.5rem}
+.footer-inner{display:flex;align-items:center;gap:1rem;max-width:100%}
+.avatar{width:44px;height:44px;border-radius:50%; background-image: url(https://avatars.githubusercontent.com/u/99336388?v=4);background-size:cover;border:2px solid var(--border-strong)}
+.footer-info{flex:1;min-width:0}
+.footer-name{font-size:13px;font-weight:500;color:var(--text)}
+.footer-role{font-size:11px;color:var(--text-muted);margin-top:1px}
+.social-links{display:flex;gap:6px}
+.social-btn{width:32px;height:32px;border-radius:8px;background:var(--card2);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);font-size:15px;transition:border-color .15s,color .15s,background .15s;text-decoration:none}
+.social-btn:hover{border-color:var(--border-strong);color:var(--purple);background:var(--purple-glow)}
+
+.reset-link{font-size:12px;color:var(--text-muted);background:none;border:none;cursor:pointer;text-decoration:underline}
+
+.preview-wrap{margin-top:1.25rem;display:none}
+.preview-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.preview-title{font-size:11px;color:var(--text-muted);letter-spacing:.05em}
+.preview-meta{font-size:11px;color:var(--text-muted)}
+.preview-table-wrap{overflow-x:auto;border-radius:var(--radius);border:0.5px solid var(--border)}
+.preview-table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
+.preview-table th{background:var(--card2);color:var(--purple);font-weight:500;padding:.6rem .85rem;text-align:left;white-space:nowrap;border-bottom:0.5px solid var(--border);position:sticky;top:0}
+.preview-table td{padding:.55rem .85rem;color:var(--text-muted);border-bottom:0.5px solid rgba(141,92,204,0.08);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.preview-table tr:last-child td{border-bottom:none}
+.preview-table tr:hover td{background:var(--card2);color:var(--text)}
+.preview-table td.empty{color:rgba(232,75,75,0.5);font-style:italic}
+.preview-footer{font-size:11px;color:var(--text-muted);margin-top:.6rem;text-align:right}
+
+.history-wrap{margin-top:1.5rem}
+.history-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.history-title{font-size:11px;color:var(--text-muted);letter-spacing:.05em}
+.history-clear{font-size:11px;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:0;text-decoration:underline}
+.history-clear:hover{color:var(--err)}
+.history-empty{font-size:13px;color:var(--text-muted);text-align:center;padding:1.5rem;background:var(--card);border-radius:var(--radius);border:0.5px dashed var(--border)}
+.history-list{display:flex;flex-direction:column;gap:8px}
+.history-item{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:.9rem 1.1rem;display:flex;align-items:center;gap:.75rem;cursor:pointer;transition:border-color .15s,background .15s}
+.history-item:hover{border-color:var(--border-strong);background:var(--card2)}
+.history-score{width:38px;height:38px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0}
+.history-info{flex:1;min-width:0}
+.history-fname{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
+.history-tag{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--purple-glow);color:var(--purple);border:0.5px solid var(--border-strong)}
+.history-del{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:4px;border-radius:6px;line-height:1;flex-shrink:0}
+.history-del:hover{color:var(--err);background:rgba(232,75,75,0.08)}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="main">
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon"><i class="ti ti-chart-dots" aria-hidden="true" style="color:#fff;font-size:18px"></i></div>
+    <div>
+      <div class="logo-text">Data Quality Monitor</div>
+      <div class="logo-sub">Análise automática de datasets</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem">
+    <span class="badge">v1.0</span>
+    <button class="reset-link" id="resetBtn" style="display:none" onclick="reset()">← Nova análise</button>
+  </div>
+</div>
+
+<div id="uploadArea">
+  <div class="upload-zone" onclick="document.getElementById('fileInput').click()" id="dropZone">
+    <i class="ti ti-file-spreadsheet" aria-hidden="true"></i>
+    <p>Arraste um CSV ou clique para selecionar</p>
+    <small>Suporte: .csv — análise instantânea no browser</small>
+    <input type="file" id="fileInput" accept=".csv,.tsv" onchange="handleFile(this.files[0])">
+  </div>
+  <div style="text-align:center">
+    <button class="demo-btn" onclick="loadDemo()"><i class="ti ti-sparkles" aria-hidden="true"></i> Testar com dados de exemplo</button>
+  </div>
+
+  <div class="history-wrap" id="historyWrap">
+    <div class="history-header">
+      <span class="history-title">HISTÓRICO DE ANÁLISES</span>
+      <button class="history-clear" onclick="clearHistory()">Limpar tudo</button>
+    </div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<div class="report" id="report">
+  <div class="section-label">PONTUAÇÃO GERAL</div>
+  <div class="score-row">
+    <div class="score-card">
+      <div class="score-label">Data Quality Score</div>
+      <div class="score-ring-wrap">
+        <svg width="68" height="68" viewBox="0 0 68 68">
+          <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(141,92,204,0.15)" stroke-width="6"/>
+          <circle id="scoreCircle" cx="34" cy="34" r="28" fill="none" stroke="#8d5ccc" stroke-width="6"
+            stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="175.9"
+            transform="rotate(-90 34 34)" style="transition:stroke-dashoffset .9s ease,stroke .4s"/>
+        </svg>
+        <div>
+          <div class="ring-text" id="scoreVal">—</div>
+          <div class="ring-grade" id="scoreGrade">calculando...</div>
+        </div>
+      </div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">Resumo do dataset</div>
+      <div id="summaryRows" style="margin-top:.25rem"></div>
+    </div>
+  </div>
+
+  <div class="section-label">MÉTRICAS DE QUALIDADE</div>
+  <div class="metrics-grid" id="metricsGrid"></div>
+
+  <div class="section-label">DISTRIBUIÇÃO</div>
+  <div class="bar-section" id="bars"></div>
+
+  <div class="section-label">LIMPEZA DE DADOS</div>
+  <div class="clean-section">
+    <div class="clean-title"><i class="ti ti-tool" aria-hidden="true" style="color:var(--purple)"></i>Ações de limpeza</div>
+    <div class="clean-grid" id="cleanGrid"></div>
+  </div>
+
+  <div class="section-label">AÇÕES</div>
+  <div class="actions-row">
+    <button class="action-btn" onclick="sendPrompt('Explique cada problema encontrado no relatório de qualidade e sugira como corrigi-los')">↗ Sugerir correções</button>
+    <button class="action-btn" onclick="sendPrompt('Gere código Python para corrigir os problemas de qualidade encontrados no dataset')">↗ Código de limpeza</button>
+    <button class="action-btn" onclick="sendPrompt('Crie uma API FastAPI com endpoint POST /validate-dataset que receba um CSV e retorne o Data Quality Report em JSON')">↗ Gerar API FastAPI</button>
+    <button class="action-btn gray" onclick="copyReport()"><i class="ti ti-copy" aria-hidden="true"></i> Copiar relatório</button>
+    <button class="action-btn gray" id="downloadBtn" onclick="downloadCSV()" style="display:none"><i class="ti ti-download" aria-hidden="true"></i> Baixar CSV tratado</button>
+    <button class="action-btn gray" id="previewBtn" onclick="togglePreview()" style="display:none"><i class="ti ti-table" aria-hidden="true"></i> Prévia</button>
+  </div>
+
+  <div class="preview-wrap" id="previewWrap">
+    <div class="preview-header">
+      <span class="preview-title">PRÉVIA DO CSV TRATADO</span>
+      <span class="preview-meta" id="previewMeta"></span>
+    </div>
+    <div class="preview-table-wrap">
+      <table class="preview-table" id="previewTable"></table>
+    </div>
+    <div class="preview-footer" id="previewFooter"></div>
+  </div>
+
+  <div class="section-label">API REST</div>
+  <div class="api-box">
+    <div class="api-label">Endpoint disponível</div>
+    <div class="api-code">POST /validate-dataset</div>
+    <div class="api-desc">Conecte esta análise a uma API FastAPI ou Flask para uso em produção</div>
+  </div>
+</div>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="avatar"></div>
+    <div class="footer-info">
+      <div class="footer-name">Mateus Henrique Leccese da Silva</div>
+      <div class="footer-role">Feito com dedicação · Data Science</div>
+    </div>
+    <div class="social-links">
+      <a class="social-btn" href="https://github.com/mateus-henriquee" title="GitHub" aria-label="GitHub">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      </a>
+      <a class="social-btn" href="https://www.instagram.com/mat.hlc" title="Instagram" aria-label="Instagram">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+      </a>
+      <a class="social-btn" href="https://www.linkedin.com/in/devmateus-henriquee/" title="LinkedIn" aria-label="LinkedIn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </a>
+    </div>
+  </div>
+</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let globalData = null;
+let cleaned = {};
+
+const HISTORY_KEY = 'dqm_history_v1';
+const MAX_HISTORY = 20;
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveToHistory(d) {
+  const history = loadHistory();
+  const entry = {
+    id: Date.now(),
+    fname: d.fname,
+    total: d.total,
+    score: d.score,
+    nullPct: d.nullPct,
+    dupPct: d.dupPct,
+    datePct: d.datePct,
+    outPct: d.outPct,
+    cpfPct: d.cpfPct,
+    headers: d.headers,
+    ts: new Date().toISOString()
+  };
+  history.unshift(entry);
+  if (history.length > MAX_HISTORY) history.splice(MAX_HISTORY);
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch {}
+  renderHistory();
+}
+
+function deleteHistoryEntry(id, e) {
+  e.stopPropagation();
+  const history = loadHistory().filter(h => h.id !== id);
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch {}
+  renderHistory();
+}
+
+function clearHistory() {
+  if (!confirm('Limpar todo o histórico?')) return;
+  try { localStorage.removeItem(HISTORY_KEY); } catch {}
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const wrap = document.getElementById('historyWrap');
+  const history = loadHistory();
+  if (history.length === 0) {
+    list.innerHTML = '<div class="history-empty"><i class="ti ti-clock" style="font-size:20px;display:block;margin-bottom:.5rem;color:var(--text-muted)"></i>Nenhuma análise ainda. Carregue um CSV para começar.</div>';
+    wrap.style.display = '';
+    return;
+  }
+  wrap.style.display = '';
+  list.innerHTML = '<div class="history-list">' + history.map(h => {
+    const color = h.score >= 80 ? '#22c77a' : h.score >= 60 ? '#f0b429' : '#e84b4b';
+    const date = new Date(h.ts);
+    const dateStr = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    const cols = h.headers ? h.headers.length : '?';
+    return `<div class="history-item" onclick="restoreFromHistory(${h.id})">
+      <div class="history-score" style="border-color:${color};color:${color}">${h.score}</div>
+      <div class="history-info">
+        <div class="history-fname">${h.fname}</div>
+        <div class="history-meta">${Number(h.total).toLocaleString('pt-BR')} linhas · ${cols} colunas · ${dateStr}</div>
+      </div>
+      <span class="history-tag">Score ${h.score}/100</span>
+      <button class="history-del" onclick="deleteHistoryEntry(${h.id}, event)" title="Remover"><i class="ti ti-x"></i></button>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function restoreFromHistory(id) {
+  const entry = loadHistory().find(h => h.id === id);
+  if (!entry) return;
+  globalData = { ...entry, rows: [], nullIndexes: [], dupIndexes: [], dateIndexes: [], outlierIndexes: [] };
+  cleaned = {};
+  document.getElementById('uploadArea').style.display = 'none';
+  document.getElementById('resetBtn').style.display = '';
+  document.getElementById('report').style.display = 'block';
+  document.getElementById('downloadBtn').style.display = 'none';
+  const circ = document.getElementById('scoreCircle');
+  const dash = 175.9;
+  circ.style.strokeDashoffset = dash - (dash * entry.score/100);
+  circ.style.stroke = entry.score >= 80 ? '#22c77a' : entry.score >= 60 ? '#f0b429' : '#e84b4b';
+  document.getElementById('scoreVal').textContent = entry.score + '/100';
+  const grade = entry.score >= 90 ? 'Excelente' : entry.score >= 80 ? 'Bom' : entry.score >= 60 ? 'Regular' : 'Crítico';
+  document.getElementById('scoreGrade').textContent = grade;
+  document.getElementById('summaryRows').innerHTML = `
+    <div class="sum-row"><i class="ti ti-file-text"></i>${Number(entry.total).toLocaleString('pt-BR')} linhas</div>
+    <div class="sum-row"><i class="ti ti-columns"></i>${entry.headers ? entry.headers.length : '?'} colunas</div>
+    <div class="sum-row"><i class="ti ti-file"></i>${entry.fname}</div>`;
+  const metrics = [
+    { icon:'ti-alert-circle', label:'Valores nulos', val: entry.nullPct+'%', status: parseFloat(entry.nullPct)>5?'err':parseFloat(entry.nullPct)>2?'warn':'ok' },
+    { icon:'ti-copy', label:'Duplicatas', val: entry.dupPct+'%', status: parseFloat(entry.dupPct)>3?'err':parseFloat(entry.dupPct)>1?'warn':'ok' },
+    entry.datePct !== null ? { icon:'ti-calendar-x', label:'Datas inválidas', val: entry.datePct+'%', status: parseFloat(entry.datePct)>2?'err':parseFloat(entry.datePct)>0?'warn':'ok' } : null,
+    entry.outPct !== null ? { icon:'ti-chart-line', label:'Outliers', val: entry.outPct+'%', status: parseFloat(entry.outPct)>5?'err':parseFloat(entry.outPct)>2?'warn':'ok' } : null,
+    entry.cpfPct !== null ? { icon:'ti-id', label:'CPF inválido', val: entry.cpfPct+'%', status: parseFloat(entry.cpfPct)>1?'err':parseFloat(entry.cpfPct)>0?'warn':'ok' } : null,
+  ].filter(Boolean);
+  const colors = { ok:'#22c77a', warn:'#f0b429', err:'#e84b4b' };
+  document.getElementById('metricsGrid').innerHTML = metrics.map(m => `
+    <div class="metric-card"><i class="ti ${m.icon} metric-icon ${m.status}"></i>
+    <div><div class="metric-label">${m.label}</div><div class="metric-val ${m.status}">${m.val}</div></div></div>`).join('');
+  document.getElementById('bars').innerHTML = metrics.map(m => `
+    <div class="bar-row"><div class="bar-name">${m.label}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.min(parseFloat(m.val)*8,100)}%;background:${colors[m.status]}"></div></div>
+    <div class="bar-pct ${m.status}">${m.val}</div></div>`).join('');
+  document.getElementById('cleanGrid').innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:.5rem 0">Carregue o CSV original para usar as ações de limpeza.</div>';
+}
+
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor='var(--purple)'; });
+dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor=''; });
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.style.borderColor=''; handleFile(e.dataTransfer.files[0]); });
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => parseAndAnalyze(e.target.result, file.name);
+  reader.readAsText(file);
+}
+
+function loadDemo() {
+  const csv = `id,nome,cpf,data_nascimento,salario,email
+1,Ana Silva,123.456.789-09,1990-03-15,5200.00,ana@email.com
+2,Bruno Costa,,1985-07-22,4800.00,bruno@email.com
+3,Carla Mendes,111.111.111-11,1992-13-01,6100.00,carla@email.com
+4,Daniel Rocha,987.654.321-00,1988-11-30,,daniel@
+5,Ana Silva,123.456.789-09,1990-03-15,5200.00,ana@email.com
+6,Eduardo Lima,234.567.890-01,1995-06-10,3200.00,eduardo@email.com
+7,Fernanda Nunes,345.678.901-23,,4500.00,fernanda@email.com
+8,Gustavo Pinto,456.789.012-34,2001-02-28,145000.00,gustavo@email.com
+9,,567.890.123-45,1978-09-17,3900.00,
+10,Helena Vieira,678.901.234-56,1983-04-05,4200.00,helena@email.com
+11,Igor Martins,789.012.345-67,1991-12-20,5500.00,igor@email.com
+12,Julia Ferreira,890.123.456-78,1997-08-14,4100.00,julia@email.com
+13,Kleber Souza,,1986-01-30,3700.00,kleber@email.com
+14,Larissa Campos,901.234.567-89,1999-15-22,3300.00,larissa@email.com
+15,Marcelo Dias,012.345.678-90,1993-10-11,4700.00,marcelo@email.com`;
+  parseAndAnalyze(csv, 'demo_dataset.csv');
+}
+
+function parseAndAnalyze(csvText, fname) {
+  const lines = csvText.trim().split('\n');
+  // Auto-detecta separador: tab, ponto-e-vírgula ou vírgula
+  const firstLine = lines[0];
+  const sep = firstLine.includes('\t') ? '\t' : firstLine.includes(';') ? ';' : ',';
+  const headers = firstLine.split(sep).map(h => h.trim().replace(/^"|"$/g, ''));
+  const rows = lines.slice(1).map(l => l.split(sep).map(c => c.trim().replace(/^"|"$/g, '')));
+  const total = rows.length;
+
+  const seen = new Set();
+  const dupIndexes = [];
+  rows.forEach((r, i) => { const k = r.join('|'); if (seen.has(k)) dupIndexes.push(i); else seen.add(k); });
+
+  const nullIndexes = [];
+  // Colunas consideradas essenciais — linha só é "nula" se todas estiverem vazias
+  const essentialKeywords = ['id','nome','name','email','cpf','telefone','celular','phone'];
+  const essentialCols = headers.reduce((acc, h, i) => {
+    if (essentialKeywords.some(k => h.toLowerCase().includes(k))) acc.push(i);
+    return acc;
+  }, []);
+  // Se não encontrar colunas essenciais, usa threshold: linha com >50% de campos vazios
+  rows.forEach((r, i) => {
+    if (essentialCols.length > 0) {
+      if (essentialCols.every(ci => !r[ci] || r[ci] === '')) nullIndexes.push(i);
+    } else {
+      const emptyCount = r.filter(c => !c || c === '').length;
+      if (emptyCount / r.length > 0.5) nullIndexes.push(i);
+    }
+  });
+  // Contagem de células nulas para o score (independente da remoção)
+  const totalNullCells = rows.reduce((acc, r) => acc + r.filter(c => !c || c === '').length, 0);
+  const nullCellPct = (totalNullCells / (rows.length * headers.length) * 100).toFixed(1);
+
+  const dateCol = headers.findIndex(h => h.toLowerCase().includes('data') || h.toLowerCase().includes('date'));
+  const dateIndexes = [];
+  const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+  if (dateCol >= 0) {
+    rows.forEach((r, i) => {
+      const v = r[dateCol];
+      if (v && dateRe.test(v)) {
+        const [,m,d] = v.split('-').map(Number);
+        if (m < 1 || m > 12 || d < 1 || d > 31) dateIndexes.push(i);
+      } else if (v) dateIndexes.push(i);
+    });
+  }
+
+  const numCols = headers.map((h,i) => ({h,i})).filter(({h}) =>
+    ['salario','salary','valor','price','amount','idade','age'].some(k => h.toLowerCase().includes(k)));
+  const outlierIndexes = [];
+  numCols.forEach(({i}) => {
+    const vals = rows.map((r,ri) => ({v: parseFloat(r[i]), i: ri})).filter(x => !isNaN(x.v));
+    if (vals.length < 3) return;
+    const sorted = [...vals.map(x=>x.v)].sort((a,b)=>a-b);
+    const q1 = sorted[Math.floor(sorted.length*.25)];
+    const q3 = sorted[Math.floor(sorted.length*.75)];
+    const iqr = q3 - q1;
+    vals.forEach(x => { if ((x.v < q1 - 1.5*iqr || x.v > q3 + 1.5*iqr) && !outlierIndexes.includes(x.i)) outlierIndexes.push(x.i); });
+  });
+
+  const cpfCol = headers.findIndex(h => h.toLowerCase().includes('cpf'));
+  let cpfIssues = 0;
+  if (cpfCol >= 0) {
+    rows.forEach(r => {
+      const v = r[cpfCol]; if (!v) return;
+      const d = v.replace(/\D/g,'');
+      if (d.length !== 11 || /^(\d)\1+$/.test(d)) cpfIssues++;
+    });
+  }
+
+  const nullPct = nullCellPct; // % de células vazias (para score e exibição)
+  const dupPct = (dupIndexes.length/total*100).toFixed(1);
+  const datePct = dateCol>=0 ? (dateIndexes.length/total*100).toFixed(1) : null;
+  const outPct = numCols.length>0 ? (outlierIndexes.length/total*100).toFixed(1) : null;
+  const cpfPct = cpfCol>=0 ? (cpfIssues/total*100).toFixed(1) : null;
+
+  let score = 100;
+  score -= Math.min(parseFloat(nullPct)*3, 30);
+  score -= Math.min(parseFloat(dupPct)*4, 20);
+  if (datePct) score -= Math.min(parseFloat(datePct)*5, 15);
+  if (outPct) score -= Math.min(parseFloat(outPct)*2, 10);
+  if (cpfPct) score -= Math.min(parseFloat(cpfPct)*5, 10);
+  score = Math.max(0, Math.round(score));
+
+  globalData = { fname, total, headers, rows, nullPct, dupPct, datePct, outPct, cpfPct, score, nullIndexes, dupIndexes, dateIndexes, outlierIndexes };
+  cleaned = {};
+  saveToHistory(globalData);
+  renderReport(globalData);
+}
+
+function renderReport(d) {
+  document.getElementById('uploadArea').style.display = 'none';
+  document.getElementById('resetBtn').style.display = '';
+  document.getElementById('report').style.display = 'block';
+
+  const circ = document.getElementById('scoreCircle');
+  const dash = 175.9;
+  circ.style.strokeDashoffset = dash - (dash * d.score/100);
+  circ.style.stroke = d.score >= 80 ? '#22c77a' : d.score >= 60 ? '#f0b429' : '#e84b4b';
+  document.getElementById('scoreVal').textContent = d.score + '/100';
+  const grade = d.score >= 90 ? 'Excelente' : d.score >= 80 ? 'Bom' : d.score >= 60 ? 'Regular' : 'Crítico';
+  document.getElementById('scoreGrade').textContent = grade;
+
+  document.getElementById('summaryRows').innerHTML = `
+    <div class="sum-row"><i class="ti ti-file-text" aria-hidden="true"></i>${d.total.toLocaleString('pt-BR')} linhas</div>
+    <div class="sum-row"><i class="ti ti-columns" aria-hidden="true"></i>${d.headers.length} colunas</div>
+    <div class="sum-row"><i class="ti ti-file" aria-hidden="true"></i>${d.fname}</div>`;
+
+  const metrics = [
+    { icon:'ti-alert-circle', label:'Valores nulos', val: d.nullPct+'%', status: parseFloat(d.nullPct)>5?'err':parseFloat(d.nullPct)>2?'warn':'ok' },
+    { icon:'ti-copy', label:'Duplicatas', val: d.dupPct+'%', status: parseFloat(d.dupPct)>3?'err':parseFloat(d.dupPct)>1?'warn':'ok' },
+    d.datePct !== null ? { icon:'ti-calendar-x', label:'Datas inválidas', val: d.datePct+'%', status: parseFloat(d.datePct)>2?'err':parseFloat(d.datePct)>0?'warn':'ok' } : null,
+    d.outPct !== null ? { icon:'ti-chart-line', label:'Outliers', val: d.outPct+'%', status: parseFloat(d.outPct)>5?'err':parseFloat(d.outPct)>2?'warn':'ok' } : null,
+    d.cpfPct !== null ? { icon:'ti-id', label:'CPF inválido', val: d.cpfPct+'%', status: parseFloat(d.cpfPct)>1?'err':parseFloat(d.cpfPct)>0?'warn':'ok' } : null,
+  ].filter(Boolean);
+
+  document.getElementById('metricsGrid').innerHTML = metrics.map(m => `
+    <div class="metric-card">
+      <i class="ti ${m.icon} metric-icon ${m.status}" aria-hidden="true"></i>
+      <div><div class="metric-label">${m.label}</div><div class="metric-val ${m.status}">${m.val}</div></div>
+    </div>`).join('');
+
+  const colors = { ok:'#22c77a', warn:'#f0b429', err:'#e84b4b' };
+  document.getElementById('bars').innerHTML = metrics.map(m => `
+    <div class="bar-row">
+      <div class="bar-name">${m.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.min(parseFloat(m.val)*8,100)}%;background:${colors[m.status]}"></div></div>
+      <div class="bar-pct ${m.status}">${m.val}</div>
+    </div>`).join('');
+
+  renderCleanButtons(d);
+}
+
+function renderCleanButtons(d) {
+  const actions = [
+    { key:'dup', icon:'ti-copy', label:'Remover duplicatas', count: d.dupIndexes.length, available: d.dupIndexes.length > 0 },
+    { key:'null', icon:'ti-alert-circle', label:'Remover linhas nulas', count: d.nullIndexes.length, available: d.nullIndexes.length > 0 },
+    d.datePct !== null ? { key:'date', icon:'ti-calendar-x', label:'Remover datas inválidas', count: d.dateIndexes.length, available: d.dateIndexes.length > 0 } : null,
+    d.outPct !== null ? { key:'out', icon:'ti-chart-line', label:'Remover outliers', count: d.outlierIndexes.length, available: d.outlierIndexes.length > 0 } : null,
+  ].filter(Boolean);
+
+  document.getElementById('cleanGrid').innerHTML = actions.map(a => {
+    const done = cleaned[a.key];
+    const cls = done ? 'done' : !a.available ? 'disabled' : '';
+    const icon = done ? 'ti-check' : a.icon;
+    const label = done ? 'Removido' : a.label;
+    return `<button class="clean-btn ${cls}" onclick="cleanData('${a.key}')" ${!a.available && !done ? 'disabled' : ''}>
+      <i class="ti ${icon}" aria-hidden="true"></i>
+      <span>${label}</span>
+      <span class="clean-count">${a.count}</span>
+    </button>`;
+  }).join('');
+}
+
+function cleanData(key) {
+  if (!globalData || cleaned[key]) return;
+  cleaned[key] = true;
+  const d = globalData;
+  const toRemove = new Set(key === 'dup' ? d.dupIndexes : key === 'null' ? d.nullIndexes : key === 'date' ? d.dateIndexes : d.outlierIndexes);
+  globalData.rows = globalData.rows.filter((_, i) => !toRemove.has(i));
+  globalData.total = globalData.rows.length;
+  const names = { dup:'Duplicatas removidas', null:'Linhas nulas removidas', date:'Datas inválidas removidas', out:'Outliers removidos' };
+  showToast(names[key] + ' (' + toRemove.size + ' linhas)');
+  globalData.nullIndexes = globalData.nullIndexes.filter(i => !toRemove.has(i));
+  globalData.dupIndexes = globalData.dupIndexes.filter(i => !toRemove.has(i));
+  globalData.dateIndexes = globalData.dateIndexes.filter(i => !toRemove.has(i));
+  globalData.outlierIndexes = globalData.outlierIndexes.filter(i => !toRemove.has(i));
+  renderCleanButtons(globalData);
+  document.getElementById('downloadBtn').style.display = '';
+  document.getElementById('previewBtn').style.display = '';
+  document.getElementById('previewWrap').style.display = 'none'; // reset preview on new clean
+  document.getElementById('previewBtn').innerHTML = '<i class="ti ti-table" aria-hidden="true"></i> Prévia';
+  document.getElementById('summaryRows').querySelector('.sum-row').innerHTML = `<i class="ti ti-file-text"></i>${globalData.total.toLocaleString('pt-BR')} linhas`;
+}
+
+function togglePreview() {
+  const wrap = document.getElementById('previewWrap');
+  const btn = document.getElementById('previewBtn');
+  const isVisible = wrap.style.display !== 'none' && wrap.style.display !== '';
+  if (isVisible) {
+    wrap.style.display = 'none';
+    btn.innerHTML = '<i class="ti ti-table" aria-hidden="true"></i> Prévia';
+    return;
+  }
+  if (!globalData || !globalData.rows.length) return;
+  const d = globalData;
+  const HEAD = 10;
+  const preview = d.rows.slice(0, HEAD);
+  const table = document.getElementById('previewTable');
+  const th = d.headers.map(h => `<th title="${h}">${h}</th>`).join('');
+  const trs = preview.map(r =>
+    '<tr>' + d.headers.map((_, ci) => {
+      const val = r[ci] ?? '';
+      return val === '' ? `<td class="empty">vazio</td>` : `<td title="${val}">${val}</td>`;
+    }).join('') + '</tr>'
+  ).join('');
+  table.innerHTML = `<thead><tr>${th}</tr></thead><tbody>${trs}</tbody>`;
+  document.getElementById('previewMeta').textContent = `${Math.min(HEAD, d.rows.length)} de ${d.total.toLocaleString('pt-BR')} linhas · ${d.headers.length} colunas`;
+  document.getElementById('previewFooter').textContent = d.total > HEAD ? `+${(d.total - HEAD).toLocaleString('pt-BR')} linhas restantes — baixe o CSV para ver tudo` : 'Exibindo todas as linhas';
+  wrap.style.display = 'block';
+  btn.innerHTML = '<i class="ti ti-table-off" aria-hidden="true"></i> Fechar prévia';
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function downloadCSV() {
+  if (!globalData) return;
+  const d = globalData;
+  const csvContent = [d.headers.join(','), ...d.rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const cleanedKeys = Object.keys(cleaned).join('-');
+  a.href = url;
+  a.download = d.fname.replace('.csv','') + '_tratado_' + cleanedKeys + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV baixado com sucesso!');
+}
+
+function copyReport() {
+  const d = globalData;
+  const txt = `DATA QUALITY REPORT\n${'─'.repeat(30)}\nArquivo: ${d.fname}\nLinhas: ${d.total?.toLocaleString('pt-BR')}\n\nNulos: ${d.nullPct}%\nDuplicatas: ${d.dupPct}%\nDatas inválidas: ${d.datePct ?? 'n/a'}%\nOutliers: ${d.outPct ?? 'n/a'}%\nCPF inválido: ${d.cpfPct ?? 'n/a'}%\n\nData Quality Score: ${d.score}/100`;
+  navigator.clipboard?.writeText(txt);
+  showToast('Relatório copiado!');
+}
+
+function reset() {
+  document.getElementById('uploadArea').style.display = '';
+  document.getElementById('resetBtn').style.display = 'none';
+  document.getElementById('report').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  globalData = null; cleaned = {};
+  document.getElementById('downloadBtn').style.display = 'none';
+  document.getElementById('previewBtn').style.display = 'none';
+  document.getElementById('previewWrap').style.display = 'none';
+  renderHistory();
+}
+
+renderHistory();
+</script>
+</body>
+</html>
