@@ -1,0 +1,7 @@
+/* metrics */
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric-card{background:var(--card);border-radius:var(--r);padding:.9rem 1.1rem;border:.5px solid var(--border);display:flex;align-items:center;gap:.75rem}
+.metric-icon{font-size:22px;flex-shrink:0}
+.metric-label{font-size:12px;color:var(--muted)}
+.metric-val{font-size:17px;font-weight:500;margin-top:1px}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.err{color:var(--err)}

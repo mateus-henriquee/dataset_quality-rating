@@ -1,0 +1,8 @@
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0d12;--card:#111520;--card2:#161b27;
+  --purple:#8d5ccc;--purple-dim:#6b44a0;--purple-glow:rgba(141,92,204,.15);
+  --text:#e7e9ec;--muted:#7a8199;
+  --border:rgba(141,92,204,.2);--border-s:rgba(141,92,204,.45);
+  --ok:#22c77a;--warn:#f0b429;--err:#e84b4b;--r:12px;
+}

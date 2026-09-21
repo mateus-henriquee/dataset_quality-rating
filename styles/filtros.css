@@ -1,0 +1,26 @@
+/* filtros */
+.collapse-panel{background:var(--card);border:.5px solid var(--border);border-radius:var(--r);overflow:hidden}
+.collapse-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.1rem;background:none;border:none;cursor:pointer;color:var(--text);font-size:13px;font-weight:500}
+.collapse-btn i.ico{color:var(--purple);font-size:16px;margin-right:.5rem}
+.collapse-btn .chev{font-size:14px;color:var(--muted);transition:transform .2s}
+.collapse-btn.open .chev{transform:rotate(180deg)}
+.collapse-body{display:none;padding:.5rem 1.1rem 1.1rem;border-top:.5px solid var(--border)}
+.collapse-body.open{display:block}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:.85rem}
+.cfg-field label{font-size:11px;color:var(--muted);display:block;margin-bottom:.4rem}
+.cfg-field select,.cfg-field input{width:100%;background:var(--card2);border:.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:.5rem .75rem;outline:none}
+.cfg-field select:focus,.cfg-field input:focus{border-color:var(--border-s)}
+.cfg-field select option{background:var(--card2)}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:.85rem}
+.btn-purple{font-size:13px;padding:6px 16px;cursor:pointer;background:var(--purple);color:#fff;border:none;border-radius:8px;font-weight:500}
+.btn-purple:hover{background:var(--purple-dim)}
+.btn-gray{font-size:13px;padding:6px 14px;cursor:pointer;background:rgba(255,255,255,.04);color:var(--muted);border:.5px solid var(--border);border-radius:8px}
+.btn-gray:hover{color:var(--err);border-color:var(--err)}
+.filter-actions{display:flex;gap:8px;margin-top:.85rem;align-items:center}
+.filter-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:.75rem}
+.chip{display:flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;background:var(--purple-glow);color:var(--purple);border:.5px solid var(--border-s);border-radius:20px}
+.chip-del{background:none;border:none;cursor:pointer;color:var(--purple);font-size:14px;line-height:1;padding:0}
+.chip-del:hover{color:var(--err)}
+.filter-result{font-size:11px;color:var(--muted)}
+.filter-result b{color:var(--purple)}
+.cfg-hint{font-size:11px;color:var(--muted);margin-top:.6rem}

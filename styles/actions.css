@@ -1,0 +1,6 @@
+/* actions */
+.actions-row{display:flex;gap:8px;flex-wrap:wrap}
+.action-btn{font-size:12px;padding:7px 14px;cursor:pointer;background:var(--purple-glow);color:var(--purple);border:.5px solid var(--border-s);border-radius:8px;display:flex;align-items:center;gap:5px}
+.action-btn:hover{background:rgba(141,92,204,.25)}
+.action-btn.gray{background:rgba(255,255,255,.04);color:var(--muted);border-color:var(--border)}
+.action-btn.gray:hover{background:rgba(255,255,255,.08);color:var(--text)}
